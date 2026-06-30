@@ -1,38 +1,56 @@
-from dishka.integrations.fastapi import setup_dishka
+"""Application factory for the wedding backend application."""
+
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
-from infrastructure.database.tables.map import map_tables
-from main.config import create_config, Config
-from main.ioc.main import create_container
-from presentation.controllers import auth
-from presentation.exceptions import register_exception_handlers
-from presentation.middlewares.session import SessionMiddleware
-
-from dishka import AsyncContainer
+from src.main.config import settings
+from src.main.ioc.container import Container
+from src.presentation.exception_handlers import register_exception_handlers
 
 
-def setup_routers(app: FastAPI) -> None:
-    app.include_router(auth.router)
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Initialize the lightweight container and database engine on startup."""
+    container = Container()
+    app.state.container = container
+    container.wire()
+
+    from src.infrastructure.database.base import init_database, shutdown_database
+
+    init_database()
+    yield
+    await shutdown_database()
 
 
-def setup_middlewares(app: FastAPI, config: Config) -> None:
-    app.add_middleware(
-        BaseHTTPMiddleware, SessionMiddleware(session_config=config.session)
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Wedding API",
+        lifespan=lifespan,
+        description="Hệ thống tra cứu tiền mừng và quản lý các dịch vụ khác",
+        version="2.1.0",
+        docs_url="/api/docs" if not settings.is_production else None,
+        redoc_url="/api/redoc" if not settings.is_production else None,
     )
 
-
-def create_application() -> FastAPI:
-    config: Config = create_config()
-    app: FastAPI = FastAPI(title=config.app.title, debug=config.app.debug)
-
-    container: AsyncContainer = create_container(config)
-    setup_dishka(container, app)
-
-    setup_routers(app)
-    setup_middlewares(app, config)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins_list,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     register_exception_handlers(app)
-
-    map_tables()
-
+    _register_routers(app)
     return app
+
+
+def _register_routers(app: FastAPI) -> None:
+    from src.presentation.controllers.auth import router as auth_router
+
+    app.include_router(auth_router)
+
+
+app = create_app()
