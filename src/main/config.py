@@ -10,7 +10,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./tienmung.db"
     SECRET_KEY: str = "dev-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200
@@ -39,4 +39,3 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
-

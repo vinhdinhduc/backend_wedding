@@ -19,8 +19,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     container.wire()
 
     from src.infrastructure.database.base import init_database, shutdown_database
+    from src.infrastructure.database.bootstrap import bootstrap_database
 
     init_database()
+    await bootstrap_database()
     yield
     await shutdown_database()
 

@@ -15,16 +15,7 @@ from src.infrastructure.database.base import Base
 
 # ── Import tất cả models để Alembic nhận dạng metadata ────────────────
 # Thêm import ở đây khi tạo model mới
-from src.infrastructure.database.models import ( 
-    ho_gia_dinh,
-    nguoi,
-    loai_su_kien,
-    su_kien,
-    lan_mung,
-    lan_di_mung,
-    trang_thai_mung_lai,
-    lich_su_chinh_sua,
-)
+from src.infrastructure.database.models.ho_gia_dinh import HoGiaDinh  # noqa: F401
 
 # ── Alembic config ─────────────────────────────────────────────────────
 config = context.config
