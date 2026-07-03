@@ -50,7 +50,7 @@ def create_app() -> FastAPI:
 
 
 def _register_routers(app: FastAPI) -> None:
-    from src.presentation.controllers.auth import router as auth_router
+    from backend_wedding.src.presentation.controllers.auth_controller import router as auth_router
 
     app.include_router(auth_router)
 
